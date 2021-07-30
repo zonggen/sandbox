@@ -29,8 +29,10 @@ submit a chart and the report together.
       * [Submitting a Chart without Chart Verification Report](#submitting-a-chart-without-chart-verification-report)
       * [Submitting a Chart Verification Report without the Chart](#submitting-a-chart-verification-report-without-the-chart)
       * [Submitting a Chart Verification Report with the Chart](#submitting-a-chart-verification-report-with-the-chart)
+   * [Post Submission Manual Review](#post-submission-manual-review)
    * [Troubleshooting Pull Request Failures](#troubleshooting-pull-request-failures)
       * [Error when submitting files not part of any chart](#error-when-submitting-files-not-part-of-any-chart)
+      * [Missing OWNERS file in the chart directory](#missing-owners-file-in-the-chart-directory)
       * [Pull request author is not part of OWNERS file](#pull-request-author-is-not-part-of-owners-file)
       * [Vendor label mismatch with the directory structure](#vendor-label-mismatch-with-the-directory-structure)
       * [Chart name mismatch with the directory structure](#chart-name-mismatch-with-the-directory-structure)
@@ -77,6 +79,8 @@ To submit a pull request, you need to fork the Git repository and clone it to
 your local system.  If you had followed the [partner connect
 documentation][partners], you should see an _OWNERS_ file under your chart
 directory within your organization directory.
+
+For Red Hat and Community charts, first submit a PR towards `main` branch with an _OWNERS_ file under your chart directory within your orgranization directory.
 
 You should see the `OWNERS` file at:
 
@@ -188,6 +192,33 @@ As mentioned in the previous section, optionally, you can sign the report.
 There will be `[WARNING]` message in the console if the signature verification
 fails.
 
+## Post Submission Manual Review
+
+After submitting the pull request, it will take a few minutes to run all the
+checks and merge the PR automatically.  These are the manual review steps you
+can perform after creating the pull request.
+
+1. Watch the newly opened pull request for any messages.
+2. If there is a message with errors, you can go to the next section,
+   [Troubleshooting Pull Request
+   Failures](#troubleshooting-pull-request-failures), to get more details.  Once
+   you identify the problem, you can update the pull request with the necessary
+   changes.
+2. If there is a success message that indicates the chart repository index has
+   been updated successfully.  You can verify it by checking the latest commit
+   in the `gh-pages` branch.  The commit message will be in this format:
+   `<partner-label>-<chart-name>-<version-number> index.yaml (#<PR-number>)`
+   (e.g, `acme-psql-service-0.1.1 index.yaml (#7)`).  Your chart-related changes
+   must be reflected in the `index.yaml` file.
+3. If you have submitted a chart source, a GitHub release with the chart and
+   corresponding report will be made available in the [GitHub releases
+   page](https://github.com/openshift-helm-charts/charts/releases).  The release
+   tag will be in this format: `<partner-label>-<chart-name>-<version-number>`
+   (e.g., `acme-psql-service-0.1.1`).
+4. The chart must be available through the official repository URL:
+   https://charts.openshift.io .  You can follow the instruction given there to
+   install it in your OpenShift cluster.
+
 ## Troubleshooting Pull Request Failures
 
 After submitting the pull request, you can keep the pull request page open to
@@ -196,23 +227,24 @@ be merged automatically.
 
 If there is an issue, a comment with details will appear in the pull request.
 At the bottom of the page, you will also see a box with a heading like this:
-"Some checks were not successful".  And below that, two checks are marked with
-the "required" label to merge the PR automatically:
+"Some checks were not successful" or "All checks have failed".  And below that,
+checks are marked with the "required" label to merge the PR automatically:
 
-1. Sanity Check / sanity-check (pull_request_target)
-2. Build and Verify / build-and-verify (pull_request)
+> CI / Chart Certification (pull_request_target)            [Details](#)
 
-The first one, Sanity Check, fails if the pull request contains changes not
-related to any chart.  This check performs using the script already part of the
-upstream repository.  That way, it will ensure the pull request author is not
-modifying the verification scripts themselves.
+The first part of Chart Certification (Sanity Check) fails if the pull request
+contains changes not related to any chart.  This check performs using the script
+already part of the upstream repository.  That way, it will ensure the pull
+request author is not modifying the verification scripts themselves.  Sanity
+check also ensures the chart version submitted is not already released
+earlier. The job will fail if any sanity checks fail.
 
-The second job, Build and Verify, runs within an unprivileged environment (for
-[security reasons][unprivileged-environment]) and performs all the necessary
+The second part of Chart Certification (Verify PR) performs all the necessary
 checks to merge the pull request.  The following sections explain various errors
-produced by the Build and Verify job.
+produced by the Verify PR.
 
-*Note*: Please ignore other infra jobs like Enable Auto Merge, Check labels, etc.
+The third part of Chart Certification makes the chart release and update
+`index.yaml` in the repository.
 
 ### Error when submitting files not part of any chart
 
@@ -391,7 +423,7 @@ Number of checks failed:
 Error message: ..
 ```
 
-To fix the above failure, you need to modify the report as per the failure
+To fix the above failure, you need to modify the chart as per the failure
 messages.
 
 ## Frequently Asked Questions
@@ -401,10 +433,16 @@ messages.
 Yes, you can do it.
 
 1. Ensure the `main` branch in your fork is updated with the latest changes.
-2. Create a GitHub [personal access token][pat] (PAT) and add it as an
-   [encyrpted secret][encyrpted-secret] with name as `BOT_TOKEN`.
-3. Create a branch and make your required changes and send a pull request to
-   your `main` branch.
+2. Ensure there is a `gh-pages` branch in your fork.
+3. You need a publicly accessible OpenShift cluster (See [partner guide to get
+   free access to OCP][partner-ocp]).
+4. Follow the [documentation to create a service account][sa-cluster-token] and
+   corresponding token.  The token should be stored as an [encrypted secret in
+   GitHub repository settings][encrypted-secret] with the key as
+   `CLUSTER_TOKEN`.  Follow the same document to create `API_SERVER` secret key.
+5. Create a branch, make the required chart changes and send a pull request to
+   your fork's `main` branch.  You should see the results in your fork as
+   explained in this document.
 
 ### Can I use any command-line interface to create pull request?
 
@@ -413,6 +451,8 @@ Yes, you can use the [GitHub CLI to create pull request][gh-cli-pr].
 ### How to update OWNERS file?
 
 Partners can refer to the [partner documentation][partners].
+
+For Red Hat and Community charts, submit a PR towards `main` branch with an _OWNERS_ file under your chart directory within your orgranization directory.
 
 ## Support
 
@@ -426,11 +466,13 @@ documentation][partner-success-desk].
 
 [partners]: https://redhat-connect.gitbook.io/certification-guides/
 [chart-verifier]: https://github.com/redhat-certification/chart-verifier
-[index-url]: http://helm-charts.openshift.io/
+[index-url]: https://charts.openshift.io
 [pat]: https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
 [encyrpted-secret]: https://docs.github.com/en/actions/reference/encrypted-secrets
 [gh-cli-pr]: https://cli.github.com/manual/gh_pr_create
 [partner-success-desk]: https://redhat-connect.gitbook.io/red-hat-partner-connect-general-guide/managing-your-account/getting-help/technology-partner-success-desk
 [new-issue]: https://github.com/openshift-helm-charts/repo/issues/new/choose
-[unprivileged-environment]: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 [ascii-armor]: https://www.redhat.com/sysadmin/creating-gpg-keypairs
+[partner-ocp]: https://redhat-connect.gitbook.io/red-hat-partner-connect-general-guide/benefits/software-access
+[sa-cluster-token]: https://github.com/openshift-helm-charts/charts/blob/main/scripts/README.md
+[encrypted-secret]: https://docs.github.com/en/actions/reference/encrypted-secrets
