@@ -215,7 +215,7 @@ def submission_tests_run_for_submitted_charts(secrets):
         os.chdir(temp_dir)
         repo = git.Repo(temp_dir)
         repo.git.fetch(
-            f'https://github.com/{secrets.test_repo}.git', f'{PROD_BRANCH}:{PROD_BRANCH}', '-f')
+            f'https://github.com/{PROD_REPO}.git', f'{PROD_BRANCH}:{PROD_BRANCH}', '-f')
         repo.git.checkout(PROD_BRANCH, 'charts')
         repo.git.restore('--staged', 'charts')
         secrets.submitted_charts = get_all_charts(
