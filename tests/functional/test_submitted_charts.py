@@ -267,9 +267,9 @@ def submission_tests_run_for_submitted_charts(secrets):
             r = github_api(
                 'post', f'repos/{secrets.test_repo}/git/refs', secrets.bot_token, json=data)
 
-            # Remove 'charts/' directory on test_repo:base_branch
-            repo.git.rm('-r', '--cached', 'charts/')
-            repo.git.commit('-m', 'Remove charts/ for testing')
+            # Remove chart_dir on test_repo:base_branch
+            repo.git.rm('-r', '--cached', chart_dir)
+            repo.git.commit('-m', f'Remove {chart_dir} for testing')
             repo.git.push(f'https://x-access-token:{secrets.bot_token}@github.com/{secrets.test_repo}',
                           f'HEAD:refs/heads/{base_branch}')
 
